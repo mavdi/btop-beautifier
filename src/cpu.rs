@@ -7,11 +7,21 @@ use std::sync::Arc;
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 
+/// Per-core wave weight in the hybrid blend. The remaining (1 - WAVE_WEIGHT) is the
+/// shared envelope, so the aggregate CPU graph traces a sine wave instead of cancelling
+/// out across phase-shifted cores.
+const WAVE_WEIGHT: f64 = 0.4;
+
 /// Compute how many milliseconds out of `tick_ms` to busy-spin to achieve `target_pct`.
 /// Clamps target into [0, 100].
 pub fn busy_ms_for_tick(target_pct: f64, tick_ms: u64) -> u64 {
     let p = target_pct.clamp(0.0, 100.0);
     ((p / 100.0) * (tick_ms as f64)).round() as u64
+}
+
+/// Blend the shared envelope with the per-core phase-shifted target.
+pub fn blended_target(envelope: f64, phase_shifted: f64) -> f64 {
+    (1.0 - WAVE_WEIGHT) * envelope + WAVE_WEIGHT * phase_shifted
 }
 
 /// Spin pinned to `core_id`, driving CPU% per `pattern`. Returns when `pattern.is_stopped()`.
@@ -23,7 +33,10 @@ pub fn run_core(pattern: Arc<PatternState>, core_id: usize, num_cores: usize, pe
     while !pattern.is_stopped() {
         let tick_start = Instant::now();
         let snap = pattern.snapshot();
-        let target = snap.cpu.target_for_core(pattern.elapsed_secs(), peak, core_id, num_cores);
+        let t = pattern.elapsed_secs();
+        let envelope = snap.cpu.target(t, peak);
+        let phase_shifted = snap.cpu.target_for_core(t, peak, core_id, num_cores);
+        let target = blended_target(envelope, phase_shifted);
         let busy_ms = busy_ms_for_tick(target, TICK_MS);
         busy_spin(Duration::from_millis(busy_ms));
         let elapsed = tick_start.elapsed();
@@ -94,5 +107,22 @@ mod tests {
     #[test]
     fn busy_ms_scales_with_tick() {
         assert_eq!(busy_ms_for_tick(25.0, 200), 50);
+    }
+
+    #[test]
+    fn blended_target_matches_inputs_when_equal() {
+        // If envelope == phase_shifted, the blend returns that value exactly.
+        assert_eq!(blended_target(50.0, 50.0), 50.0);
+        assert_eq!(blended_target(0.0, 0.0), 0.0);
+        assert_eq!(blended_target(100.0, 100.0), 100.0);
+    }
+
+    #[test]
+    fn blended_target_uses_envelope_majority() {
+        // With WAVE_WEIGHT=0.4, blended = 0.6*env + 0.4*pcs.
+        // env=100, pcs=0 → 60.0
+        assert!((blended_target(100.0, 0.0) - 60.0).abs() < 1e-9);
+        // env=0, pcs=100 → 40.0
+        assert!((blended_target(0.0, 100.0) - 40.0).abs() < 1e-9);
     }
 }

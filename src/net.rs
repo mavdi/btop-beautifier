@@ -2,13 +2,13 @@
 
 use crate::pattern::PatternState;
 use crate::ratelimit::TokenBucket;
+use crate::TICK_MS;
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::sync::Arc;
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 
-const TICK_MS: u64 = 100;
 const CHUNK_SIZE: usize = 64 * 1024;
 
 /// Spawn the network driver: returns (listener_thread, sender_thread).

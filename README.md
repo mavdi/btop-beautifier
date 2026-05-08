@@ -40,7 +40,7 @@ btop hides loopback by default. Press `b` inside btop to cycle the network inter
 
 - **CPU:** one pinned thread per logical core. Each tick (100ms), the thread busy-spins for `target%` of the tick and sleeps the rest. Each core uses the same sine parameters but with a per-core phase offset, producing a traveling-wave visual across cores.
 - **Memory:** allocates `--mem-cap` zeroed bytes at startup, immediately releases them via `madvise(MADV_DONTNEED)`, then shapes RSS by re-touching pages (grow) and madvising the unused tail (shrink).
-- **Network:** loopback TCP. A sender thread is paced by a token bucket to hit the sine-shaped target throughput; a receiver thread drains.
+- **Network:** loopback TCP. A sender thread is paced by a token bucket to hit the sine-shaped target throughput; a receiver thread drains. `--net-cap` is the peak per direction, so on `lo` you'll see both RX and TX trace the same waveform.
 - **Patterns:** sum of K sines per channel (additive synthesis). Re-rolled with new randomly-chosen frequencies, amplitudes, and phases every `--reroll` seconds.
 
 ## Development

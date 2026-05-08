@@ -1,6 +1,6 @@
 //! Token bucket rate limiter.
 
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 /// Simple token bucket. Caller pulls tokens; bucket refills at `rate` tokens/sec.
 pub struct TokenBucket {
@@ -40,20 +40,6 @@ impl TokenBucket {
         let taken = want.min(self.tokens).max(0.0);
         self.tokens -= taken;
         taken
-    }
-
-    /// Sleep until at least `want` tokens are available, then take them.
-    pub fn take_blocking(&mut self, want: f64) {
-        loop {
-            self.refill();
-            if self.tokens >= want {
-                self.tokens -= want;
-                return;
-            }
-            let need = want - self.tokens;
-            let wait = Duration::from_secs_f64(need / self.rate.max(1.0));
-            std::thread::sleep(wait);
-        }
     }
 }
 

@@ -1,6 +1,7 @@
 //! Memory driver: shape RSS via page-touch + madvise(MADV_DONTNEED).
 
 use crate::pattern::PatternState;
+use crate::TICK_MS;
 use nix::sys::mman::{madvise, MmapAdvise};
 use std::num::NonZeroUsize;
 use std::ptr::NonNull;
@@ -9,7 +10,6 @@ use std::thread::{self, JoinHandle};
 use std::time::Duration;
 
 const PAGE_STEP: usize = 4096;
-const TICK_MS: u64 = 100;
 
 /// Compute the target filled length in bytes for a given normalized signal in [0, 1].
 pub fn target_len_bytes(normalized: f64, cap: usize) -> usize {

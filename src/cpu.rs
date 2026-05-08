@@ -1,12 +1,11 @@
 //! CPU driver: per-core pinned threads, busy-spin to target percent.
 
 use crate::pattern::PatternState;
+use crate::TICK_MS;
 use std::hint::black_box;
 use std::sync::Arc;
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
-
-const TICK_MS: u64 = 100;
 
 /// Compute how many milliseconds out of `tick_ms` to busy-spin to achieve `target_pct`.
 /// Clamps target into [0, 100].

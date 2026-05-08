@@ -157,19 +157,25 @@ fn print_status(state: &PatternState, elapsed: Duration, reroll: Duration, since
 }
 
 fn join_with_timeout(handles: Vec<thread::JoinHandle<()>>, timeout: Duration) {
-    // Naive: spin a watchdog that gives up after timeout. We can't actually cancel, so if a thread
-    // doesn't observe the stop flag in time we leak it (process exit cleans up).
+    // Sweep all handles in parallel: each tick, drain finished ones, keep polling the rest.
+    // This way one slow thread can't starve the join budget for the others.
     let deadline = Instant::now() + timeout;
-    for h in handles {
-        loop {
+    let mut remaining = handles;
+    while !remaining.is_empty() {
+        if Instant::now() > deadline {
+            eprintln!("[btop-beautifier] thread join timeout — forcing exit");
+            std::process::exit(0);
+        }
+        let mut still_running = Vec::with_capacity(remaining.len());
+        for h in remaining {
             if h.is_finished() {
                 let _ = h.join();
-                break;
+            } else {
+                still_running.push(h);
             }
-            if Instant::now() > deadline {
-                eprintln!("[btop-beautifier] thread join timeout — forcing exit");
-                std::process::exit(0);
-            }
+        }
+        remaining = still_running;
+        if !remaining.is_empty() {
             thread::sleep(Duration::from_millis(50));
         }
     }

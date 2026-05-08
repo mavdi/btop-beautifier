@@ -1,0 +1,18 @@
+pkgbase = btop-beautifier
+	pkgdesc = Drive CPU, memory, and loopback network in sine-wave patterns to make btop look beautiful
+	pkgver = 0.1.0
+	pkgrel = 1
+	url = https://github.com/mavdi/btop-beautifier
+	arch = x86_64
+	arch = aarch64
+	license = MIT
+	makedepends = cargo
+	depends = gcc-libs
+	depends = glibc
+	provides = btop-beautifier
+	conflicts = btop-beautifier-bin
+	conflicts = btop-beautifier-git
+	source = btop-beautifier-0.1.0.tar.gz::https://github.com/mavdi/btop-beautifier/archive/refs/tags/v0.1.0.tar.gz
+	sha256sums = SKIP
+
+pkgname = btop-beautifier

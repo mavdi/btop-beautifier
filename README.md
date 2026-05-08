@@ -2,6 +2,31 @@
 
 A small Rust CLI that drives CPU, memory, and loopback network in sine-wave patterns so [btop](https://github.com/aristocratos/btop) renders beautiful, organic-looking graphs. Useful for demos, screen recordings, or pure visual delight.
 
+![btop running with btop-beautifier driving the load](docs/screenshot.png)
+
+## Install
+
+### Arch Linux (AUR)
+
+```bash
+yay -S btop-beautifier-bin   # prebuilt binary
+# or
+yay -S btop-beautifier       # build from source
+```
+
+### From release binaries
+
+Grab the appropriate tarball from the [latest release](https://github.com/mavdi/btop-beautifier/releases/latest) and drop the `btop-beautifier` binary on your `PATH`.
+
+### From source
+
+```bash
+git clone https://github.com/mavdi/btop-beautifier
+cd btop-beautifier
+cargo build --release
+# binary at target/release/btop-beautifier
+```
+
 ## Build
 
 ```bash
@@ -54,4 +79,4 @@ The smoke test deliberately spikes CPU and allocates memory. **Don't run it on s
 
 ## License
 
-MIT (or whatever the parent omarchy scripts use — adjust if needed).
+[MIT](LICENSE)
